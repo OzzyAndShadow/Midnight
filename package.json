@@ -1,0 +1,16 @@
+{
+  "name": "sb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js-selfbot-v13": "^2.2.0",
+    "kleur": "^4.1.4",
+    "mathjs": "^10.6.1"
+  }
+}
