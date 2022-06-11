@@ -1,6 +1,5 @@
 # MidnightSelfBot
 A selfbot for discord.
-Current version: 1.1
 
 ## How to set up
 1:
