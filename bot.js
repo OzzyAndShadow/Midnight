@@ -108,6 +108,7 @@ client.on('message', async (msg) => {
 [setlayout <compact|normal>] Sets your discord layout
 [setstatus <online|idle|dnd|invisible> <{emoji}|null> <status/bio>] Set your status
 [repeat] Repeats the last command you did (excluding -repeat obviously)
+[prefix] Sets your ${name} prefix.
 \`\`\``)
     } else if(command == 'abusive') {
         msg.channel.send(`\`\`\`ini
