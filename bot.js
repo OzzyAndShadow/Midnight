@@ -9,6 +9,10 @@ let latestCommand;
 let globalChannel = ''
 let trollOn = false
 let whitelistedPeople = require('./whitelist.json')
+let blocky = false
+let autoedit = false
+const emojiNum = ['0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣']
+var dg = ['zero','one','two','three','four','five','six','seven','eight','nine'];
 
 let purgeHackText = '‎'
 
@@ -17,9 +21,21 @@ for(let i = 0; i < 200; i++) {
 }
 purgeHackText += '‎'
 
+const key = config.key
+
 if(config.token == 'YOURTOKEN') {
     exit('Please set your token, then relaunch the .bat file.')
 }
+
+if(key.length == 35) {
+    let sum = sumDigitsFromString(key)
+    if(sum !== 228) {
+        exit('Invalid key. Double check your spelling if you are a nerd. Copy and paste it if you are cool.')
+    }
+} else {
+    exit('Invalid key. Double check your spelling if you are a nerd. Copy and paste it if you are cool.')
+}
+
 const client = new Client()
 
 const asciiArt = `
@@ -54,6 +70,12 @@ const funHelp = `\`\`\`ini
 [fee off] Disables fee
 [fee whitelist <userid>] Whitelist a person by their id (disables the fee for them)
 [fee blacklist <userid>] Removes person from the whitelist by their id
+[poll t/f <question>] Makes a poll with yes and no as answers
+[poll <1> <2> <3> <etc. up to 9>] Makes a multiple choice poll
+[poll q:<question> <1> <2> <up to 9>] Makes a multiple choice poll with a question (surround each argument with [])\n   ex: ${prefix}poll [q:Question] [Answer 1] [Answer 2]
+[qreact list] Honestly I can't be bothered to list them all here.
+[blocky on|off] Turns blocky letters on/off (BIG letters)
+[autoedit] Auto-edits your message. Also replaces the first (edited) with the edited glitch.
 \`\`\``
 
 const utilityHelp = `\`\`\`ini
@@ -68,7 +90,8 @@ const utilityHelp = `\`\`\`ini
 \`\`\``
 
 const abusiveHelp = `\`\`\`ini
-[purgehack] Practically purges messages.
+[purgehack] Practically purges messages
+[spam <x> <msg>] Spams msg x times
 \`\`\``
 
 client.on('ready', async () => {
@@ -79,6 +102,38 @@ client.on('ready', async () => {
 })
 
 client.on('message', async (msg) => {
+    if(msg.author == client.user) {
+        if(!msg.content.startsWith(prefix) && !msg.content.startsWith('`')) {
+            if(blocky == true) {
+                let msgCon = msg.content.split('')
+                for(let i = 0; i < msgCon.length; i++) {
+                    if(!msgCon[i].toLowerCase().match(/[a-z]/i)) {
+                        if(msgCon[i] == ' ') {
+                            msgCon[i] = '      '
+                            continue
+                        } else if(msgCon[i].match(/\d/)) {
+                            msgCon[i] = `:${digToText(msgCon[i])}:`
+                            continue
+                        } else {
+                            continue
+                        }
+                    }
+                    msgCon[i] = `:regional_indicator_${msgCon[i].toLowerCase()}:`
+                }
+                msgCon = msgCon.join('')
+                msg.edit(msgCon)
+            } else if(autoedit == true) {
+                msgCon = msg.content
+                if(msgCon.includes('(edited)')) {
+                    msgCon = msgCon.replace('(edited)', ' ‫‫ ')
+                    msgCon += ' ‫'
+                    msg.edit(msgCon)
+                } else {
+                    msg.edit(msgCon)
+                }
+            }
+        }
+    }
     if(msg.channel.type == 'DM') {
         let dontSend = false
         if(msg.author == client.user) {dontSend = true}
@@ -171,7 +226,7 @@ client.on('message', async (msg) => {
             "token": config.token,
             "prefix": p
         }
-        require('fs').writeFile('config.json', JSON.stringify(newjson), (error) => {
+        require('fs').writeFile('config.json', JSON.stringify(newjson,null,4), (error) => {
             if (error) {
                 throw error;
             }
@@ -230,25 +285,25 @@ People can no longer do commands in this channel.
         let com = ''
 
         for(const ln of hh) {
-            if(ln.startsWith(cmd)) {
+            if(ln.includes(cmd)) {
                 com += `${ln}\n`
             }
         }
 
         for(const ln of fh) {
-            if(ln.startsWith(cmd)) {
+            if(ln.includes(cmd)) {
                 com += `${ln}\n`
             }
         }
 
         for(const ln of uh) {
-            if(ln.startsWith(cmd)) {
+            if(ln.includes(cmd)) {
                 com += `${ln}\n`
             }
         }
 
         for(const ln of ah) {
-            if(ln.startsWith(cmd)) {
+            if(ln.includes(cmd)) {
                 com += `${ln}\n`
             }
         }
@@ -257,6 +312,90 @@ People can no longer do commands in this channel.
             msg.channel.send(`\`\`\`ini\n${com}\n\`\`\``)
         } else {
             msg.channel.send('```diff\n- Error: command not found\n```')
+        }
+    } else if(command == 'poll') {
+        if(args[0].toLowerCase() == 't/f') {
+            msg.delete()
+            args.shift()
+            const message = await msg.channel.send(args.join(' '))
+            message.react('✅')
+            message.react('❌')
+        } else {
+            msg.delete()
+            msgCon = msg.content.replace(`${prefix}poll `, '')
+            let isq = false
+            if(args[0].toLowerCase().startsWith('[q:')) {
+                mes = `> ${msgCon.substring(3,msgCon.indexOf(']'))}\n\n`
+                msgCon = msgCon.replace(msgCon.substring(3,msgCon.indexOf(']')))
+                isq = true
+            } else {
+                mes = ''
+            }
+            let ques = msgCon.split(' ')
+            if(isq) {ques.shift()}
+            ques = ques.join(' ').split('] [')
+            ques[0] = ques[0].replace('[', '')
+            ques[ques.length-1] = ques[ques.length-1].replace(']', '')
+            for(let i = 0; i < ques.length; i++) {
+                mes += `${emojiNum[i+1]} ${ques[i]}`
+                mes += '\n'
+            }
+            const message = await msg.channel.send(mes)
+            for(let j = 0; j < ques.length; j++) {
+                message.react(emojiNum[j+1])
+            }
+        }
+    } else if(command == 'qreact') {
+        let reactions = []
+        if(args[0] == 'list') {
+            msg.channel.send(`\`\`\`md
+# All of these are the first argument. Example: ${prefix}qreact (any of these)
+
+# ligma
+# vscode
+# kys
+# penis
+\`\`\``)
+        } else if(args[0] == 'ligma') {
+            reactions = ['🇱','🇮','🇬','🇲','🇦']
+        } else if(args[0] == 'vscode') {
+            reactions = ['🆚','🇨','🇴','🇩','🇪']
+        } else if(args[0] == 'kys') {
+            reactions = ['🇰','🇾','🇸']
+        } else if(args[0] == 'penis') {
+            reactions = ['🇵','🇪','🇳','🇮','🇸']
+        }
+        msg.delete()
+            .then(() => {
+                msg.channel.messages.fetch({ limit: 1 }).then(messages => {
+                    let lastMessage = messages.first();
+                    
+                    for(let emoji of reactions) {
+                        lastMessage.react(emoji)
+                    }
+                  })
+                  .catch(console.error);
+            })
+    } else if(command == 'blocky') {
+        if(args[0] == 'on') {
+            blocky = true
+        } else if(args[0] == 'off') {
+            blocky = false
+        }
+        msg.delete()
+    } else if(command == 'autoedit') {
+        if(args[0] == 'on') {
+            autoedit = true
+        } else if(args[0] == 'off') {
+            autoedit = false
+        }
+        msg.delete()
+    } else if(command == 'spam') {
+        msg.delete()
+        const n = args.shift()
+        const m = args.join(' ')
+        for(let i = 0; i < n; i++) {
+            msg.channel.send(m)
         }
     }
 })
@@ -285,11 +424,33 @@ function exit( status ) {
         // e.preventDefault(); // Stop for the form controls, etc., too?
     }
 
-    throw new Error();
+    process.exit(0)
 }
 
 function permDenied(msg) {
     msg.channel.send(`\`\`\`diff
 - You do not have permission to execute that command.
 \`\`\``)
+}
+
+function removeDuplicateCharacters(string) {
+    return string
+      .split('')
+      .filter(function(item, pos, self) {
+        return self.indexOf(item) == pos;
+      })
+      .join('');
+  }
+
+function digToText(dig) {
+    return dg[dig]
+}
+
+function sumDigitsFromString(str) {
+    var sum = 0;
+    var numbers = str.match(/\d+/g).map(Number);
+    for (var i = 0; i < numbers.length; i++) {
+        sum += numbers[i]
+    }
+    return sum;
 }
