@@ -23,10 +23,6 @@ purgeHackText += '‎'
 
 const key = config.key
 
-if(config.token == 'YOURTOKEN') {
-    exit('Please set your token, then relaunch the .bat file.')
-}
-
 if(key.length == 35) {
     let sum = sumDigitsFromString(key)
     if(sum !== 228) {
