@@ -1,11 +1,11 @@
-		  Midnight
+		    Midnight
 
 	Alright, so you downloaded Midnight, the
 best selfbot for discord. This is a step by step-ish guide.
 If you mess something up, just download it again, and
 follow this guide.
 
-		Instructions
+		  Instructions
 
 	    Installing Midnight Self Bot
 
@@ -14,7 +14,7 @@ follow this guide.
     move it to somewhere you won't forget it.
 3. After that, continue the guide.
 
-	                 Setting It up
+	          Setting It up
 
 1. Open the Config file (Config.bat). This will prompt
     you to input some information you need for
@@ -31,7 +31,7 @@ follow this guide.
       We hope you have a great time using Midnight
 	          - Ozzy (Developer)
 
-		WARNING
+		    WARNING
 
 Your account could and will get banned from Discord
 IF you use it in a popular or public server. This is YOUR
