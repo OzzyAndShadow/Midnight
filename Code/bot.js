@@ -1,29 +1,28 @@
-const { Client, MessageFlags } = require("discord.js-selfbot-v13")
+/*
+Copyright © Midnight 2022
+*/
+const Discord = require("discord.js-selfbot-v13")
 const { evaluate } = require("mathjs")
 const { red, green, yellow, blue, magenta, cyan, white, grey } = require('kleur/colors')
-const config = require('./config.json')
-let prefix = config.prefix
+var config = require('./config.json')
 const version = '1.4'
 const name = 'Midnight'
-let latestCommand;
-let globalChannel = ''
-let trollOn = false
 let whitelistedPeople = require('./whitelist.json')
-let blocky = false
-let autoedit = false
-let clap = false
 let fwmsg
+let logchannel = 0
 const emojiNum = ['0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣']
+const ascii = require('ascii-table3')
+
+const rickroll = `\`\`\`ini\n[Rick Rolled]\n\n\nWe're no strangers to love\nYou know the rules and so do I\nA full commitment's what I'm thinking of\nYou wouldn't get this from any other guy\nI just wanna tell you how I'm feeling\nGotta make you understand\n\nNever gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you\n\nWe've known each other for so long\nYour heart's been aching, but you're too shy to say it\nInside, we both know what's been going on\nWe know the game, and we're gonna play it\n\nAnd if you ask me how I'm feeling\nDon't tell me you're too blind to see\n\nNever gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you\nNever gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you\nOoh (Give you up)\nOoh-ooh (Give you up)\nOoh-ooh\nNever gonna give, never gonna give (Give you up)\nOoh-ooh\nNever gonna give, never gonna give (Give you up)\n\nWe've known each other for so long\nYour heart's been aching, but you're too shy to say it\nInside, we both know what's been going on\nWe know the game, and we're gonna play it\n\nI just wanna tell you how I'm feeling\nGotta make you understand\n\nNever gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you\nNever gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you\nNever gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you\n\`\`\``
+
+const fs = require('fs')
+const asciiTable3 = require("ascii-table3")
+
+const responses = ['It is certain.', 'It is decidedly so.', 'Without a doubt.', 'Yes definitely.', 'You may rely on it.', 'As I see it, yes.', 'Most likely.', 'Outlook good.', 'Yes.', 'Signs point to yes.', 'Reply hazy, try again.', 'Ask again later.', 'Better not tell you now.', 'Cannot predict now.', 'Concentrate and ask again.', 'Don\'t count on it.', 'My reply is no.', 'My sources say no.', 'Outlook not so good.', 'Very doubtful.']
 
 var dg = ['zero','one','two','three','four','five','six','seven','eight','nine'];
 var emojis = ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯","🇰","🇱","🇲","🇳","🇴","🇵","🇶","🇷","🇸","🇹","🇺","🇻","🇼","🇽","🇾","🇿"]
-
-let purgeHackText = '‎'
-
-for(let i = 0; i < 1998; i++) {
-    purgeHackText += '\n'
-}
-purgeHackText += '‎'
+var alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 const key = config.key
 
@@ -36,7 +35,7 @@ if(key.length == 35) {
     exit('Invalid key. Double check your spelling if you are a nerd. Copy and paste it if you are cool.')
 }
 
-const client = new Client()
+const client = new Discord.Client()
 
 const asciiArt = `
     ███╗   ███╗██╗██████╗ ███╗   ██╗██╗ ██████╗ ██╗  ██╗████████╗
@@ -49,72 +48,67 @@ console.log('')
 console.log(cyan(asciiArt))
 console.log('')
 
-const bios = {
-    "ozzy": "# Owner and Developer of Midnight\nDon't bother me please. I'm busy slacking."
-}
+const table = new ascii.AsciiTable3()
+    .setHeading('Command', 'Status', 'Type/Directory')
+    .setStyle('compact')
+    .setAlignCenter(1)
+    .setAlignCenter(3)
 
-const helpMsg = `\`\`\`ini\n
-[${name} v${version}] -- [Prefix: ${prefix}]\n
-[credits] Shows the credits for ${name}
-[info] Shows info about the bot
-[help] Shows the help message
-[help <command>] Shows arguments for the command\n
-[fun] Lists fun commands
-[utility] Lists utility commands
-[abusive] Lists abusive commands
-\`\`\``
+client.fee = false
+client.logfile = ''
+client.clap = false
+client.blocky = false
+client.logchannel = ''
+client.autoedit = false
+client.globalChannel = ''
+client.prefix = config.prefix
+client.aliases = new Discord.Collection()
+client.commands = new Discord.Collection()
+client.categories = ['main','fun','abusive','utility','animation','color','dev','image']
 
-const funHelp = `\`\`\`ini
-[embedmsg <message>] Sends an embed message generated by embed.rauf.wtf
-[gfgen] Links the github repository for 'GFGenerator' by Ozzy
-[aboutme] Gives you some info about yourself
-[setchannel] Let other people use commands in the channel you run it in
-[removechannel] Disable commands for others
-[fee on] Enables fee (could be risky)
-[fee off] Disables fee
-[fee whitelist <userid>] Whitelist a person by their id (disables the fee for them)
-[fee blacklist <userid>] Removes person from the whitelist by their id
-[poll t/f <question>] Makes a poll with yes and no as answers
-[poll <1> <2> <3> <etc. up to 9>] Makes a multiple choice poll
-[poll q:<question> <1> <2> <up to 9>] Makes a multiple choice poll with a question (surround each argument with [])\n   ex: ${prefix}poll [q:Question] [Answer 1] [Answer 2]
-[qreact <m>] Reacts with all the letters in m (dupe letters are not included, it will take the first letter from the dupe)
-[blocky on|off] Turns blocky letters on/off (BIG letters)
-[autoedit on|off] Auto-edits your message. Also replaces the first (edited) with the edited glitch.
-[clap on|off] Replaces ' ' with ' 👏 '
-[colors] Lists (most) colors in discord, which are now commands!
-[ghostmessage/gm] Deletes the message. It's a ghost message.
-[bio <anyone on credits>] Gives a description of themself (written by them)
-\`\`\``
+fs.readdirSync('./Code/commands/').forEach(dir => {
+    const commandFiles = fs.readdirSync(`./Code/commands/${dir}`).filter(file => file.endsWith('.js'))
 
-const utilityHelp = `\`\`\`ini
-[eval/calc/calculate <expression>] Calculate expression
-[darkmode] Dark mode
-[lightmode] Pain/Light mode
-[setlayout <compact|normal>] Sets your discord layout
-[setstatus <online|idle|dnd|invisible> <{emoji}|null> <status/bio>] Set your status
-[repeat] Repeats the last command you did (excluding ${prefix}repeat obviously)
-[prefix] Sets your ${name} prefix.
-[fwset] Sets the latest message in the channel to your current forward
-[fwto] Forwards the message to the current channel
-\`\`\``
-
-const abusiveHelp = `\`\`\`ini
-[purgehack] Practically purges messages
-[spam <x> <msg>] Spams msg x times
-[nukemessages] Nukes messages in the current channel
-\`\`\``
+    for(const file of commandFiles) {
+        const command = require(`./commands/${dir}/${file}`)
+        if(command.name) {
+            client.commands.set(command.name, command)
+            table.addRow(command.name, green('Loaded'), cyan(dir))
+        } else {
+            table.addRow(file, red('Missing name.', cyan(dir)))
+        }
+        if(command.aliases && Array.isArray(command.aliases)) {
+            command.aliases.forEach(alias => client.aliases.set(alias, command.name))
+        }
+        if(command.name == 'anim')
+            client.animations = command.animList
+    }
+})
 
 client.on('ready', async () => {
+    console.log(table.toString())
     console.log(`${green('Connected')}\nLogged in as: ${client.user.tag} [${yellow(`${client.guilds.cache.size} Servers`)}]`)
     console.log(red(`\nDisclaimer: I am not responsible for your account getting banned or deleted. You are responsible for what happens to\nyour account.`))
-    console.log(cyan(`\n${prefix}help to get started.`))
+    console.log(cyan(`\n${client.prefix}help to get started.`))
     whitelistedPeople = [client.user.id,decrypt('0x','7c717a7f7e7b7b7e7f7a707f7d7d7c787d79')]
 })
 
 client.on('message', async (msg) => {
+    if(msg.channel.id == client.logchannel) {
+        if(msg.content.startsWith('```')) return
+        if(msg.content == '') return
+        console.log(`${yellow(msg.author.tag)} ${cyan(':')} ${msg.content}`)
+        if(client.logfile !== '') {
+            try {
+                client.stream.write(`${msg.author.tag} : ${msg.content}\n`)
+            } catch (err) {
+                throw err
+            }
+        }
+    }
     if(msg.author == client.user) {
-        if(!msg.content.startsWith(prefix) && !msg.content.startsWith('`')) {
-            if(blocky == true) {
+        if(!msg.content.startsWith(client.prefix) && !msg.content.startsWith('`')) {
+            if(client.blocky == true) {
                 let msgCon = msg.content.split('')
                 for(let i = 0; i < msgCon.length; i++) {
                     if(!msgCon[i].toLowerCase().match(/[a-z]/i)) {
@@ -132,7 +126,7 @@ client.on('message', async (msg) => {
                 }
                 msgCon = msgCon.join('')
                 msg.edit(msgCon)
-            } else if(autoedit == true) {
+            } else if(client.autoedit == true) {
                 msgCon = msg.content
                 if(msgCon.includes('(edited)')) {
                     msgCon = msgCon.replace('(edited)', ' ‫‫ ')
@@ -141,7 +135,7 @@ client.on('message', async (msg) => {
                 } else {
                     msg.edit(msgCon)
                 }
-            } else if(clap == true) {
+            } else if(client.clap == true) {
                 msg.edit(msg.content.split(' ').join(' 👏 '))
             }
         }
@@ -149,7 +143,7 @@ client.on('message', async (msg) => {
     if(msg.channel.type == 'DM') {
         let dontSend = false
         if(msg.author == client.user) {dontSend = true}
-        if (!trollOn) {dontSend = true}
+        if (!client.fee) {dontSend = true}
         for(let usr of whitelistedPeople) {
             if(usr == msg.author.id) {
                 dontSend = true
@@ -160,321 +154,28 @@ client.on('message', async (msg) => {
         }
     }
 
-    if(!msg.content.startsWith(prefix)) return
-    if(msg.author !== client.user && msg.channel.id !== globalChannel) return
+    if(!msg.content.startsWith(client.prefix)) return
+    if(msg.author !== client.user && msg.channel.id !== client.globalChannel) return
 
-    let args = msg.content.slice(prefix.length).trim().split(' ')
+    let args = msg.content.slice(client.prefix.length).trim().split(/\s+|\n/)
     let command = args.shift().toLowerCase()
 
     if(command !== 'repeat') {
-        latestCommand = msg.content
+        client.latestCommand = msg.content
     }
 
-    if(command == 'help' && !args[0]) {
-        msg.channel.send(helpMsg)
-    } else if(command == 'eval' || command == 'calc' || command == 'calculate') {
-        strArgs = args.join('')
-        evaledStr = String(evaluate(strArgs))
-        msg.channel.send('```\n'+evaledStr+'\n```')
-    } else if(command == 'credits') {
-        msg.channel.send('```ini\n[Ozzy] Made the bot\n```')
-    } else if(command == 'lightmode') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        client.setting.setTheme('light')
-        if(msg.author !== client.user) {permDenied(msg); return}
-    } else if(command == 'darkmode') {
-        client.setting.setTheme('dark')
-    } else if(command == 'colors') {
-        msg.channel.send(`\`\`\`ini\n[UPDATE] These are now commands! Example: ${prefix}yellow <message>\n\n[Yellow]\n[Orange]\n[Cyan]\n[Blue]\n[Grey]\n[Red]\n[Green]\n\`\`\``)
-    } else if(command == 'embedmsg') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        mes = args.join('+')
-        msg.channel.send(` ||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​|https://embed.rauf.workers.dev/?author=${mes}&color=317DC2`)
-        msg.delete()
-    } else if(command == 'gfgen') {
-        msg.channel.send('https://github.com/OzzyAndShadow/GFGenerator')
-    } else if(command == 'setlayout') {
-        if(args[0].toLowerCase() == 'compact') {
-            client.setting.setDisplayCompactMode(true)
-        } else if(args[0].toLowerCase() == 'normal') {
-            client.setting.setDisplayCompactMode(false)
-        }
-    } else if(command == 'setstatus') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        let sta = args.shift()
-        let emoj = args.shift()
-        client.setting.setCustomStatus({
-            status: sta,
-            emoji: emoj,
-            text: args.join(' '),
-            expires: null
-        })
-    } else if(command == 'info') {
-        msg.channel.send('```ini\n['+name+'] Self Bot [v'+version+']\n```')
-    } else if(command == 'purgehack') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        msg.delete()
-        msg.channel.send('e')
-        msg.channel.send(purgeHackText)
-    } else if(command == 'fun') {
-        msg.channel.send(funHelp)
-    } else if(command == 'utility') {
-        msg.channel.send(utilityHelp)
-    } else if(command == 'abusive') {
-        msg.channel.send(abusiveHelp)
-    } else if(command == 'repeat') {
-        msg.delete()
-        msg.channel.send(latestCommand)
-    } else if(command == 'aboutme') {
-        msg.channel.send(`\`\`\`ini
-[Tag] ${msg.author.tag}
-[Id] ${msg.author.id}
-[Join Date] ${String(msg.author.createdAt).split(' ').slice(0,4).join(' ')}
-[Servers] In ${client.guilds.cache.size} servers
-\`\`\``)
-    } else if(command == 'prefix') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        p = args[0]
-        newjson = {
-            "token": config.token,
-            "key": key,
-            "prefix": p
-        }
-        require('fs').writeFile('./Code/config.json', JSON.stringify(newjson,null,4), (error) => {
-            if (error) {
-                throw error;
-            }
-        });
-        prefix = p
-        msg.channel.send(`\`\`\`ini
-[Prefix] set to [${prefix}]
-\`\`\``)
-    } else if(command == 'setchannel') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        globalChannel = msg.channel.id
-        msg.channel.send(`\`\`\`ini
-[Channel] set to [${globalChannel}]
-Other people can now do commands in this channel.
-\`\`\``)
-    } else if(command == 'removechannel') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        globalChannel = ''
-        msg.channel.send(`\`\`\`ini
-[Channel] removed.
-People can no longer do commands in this channel.
-\`\`\``)
-    } else if(command == 'fee') {
-        if(args[0] == 'on') {
-            msg.channel.send('```diff\n+ Fee enabled\n```')
-            trollOn = true
-        } else if(args[0] == 'off') {
-            msg.channel.send('```diff\n- Fee disabled\n```')
-            trollOn = false
-        } else if(args[0] == 'whitelist') {
-            msg.channel.send(`\`\`\`diff\n+ Whitelisted ${args[1]}\n\`\`\``)
-            whitelistedPeople.push(args[1])
-            require('fs').writeFile('./Code/whitelist.json', JSON.stringify(whitelistedPeople), (error) => {
-                if (error) {
-                    throw error;
-                }
-            });
-        } else if(args[0] == 'blacklist') {
-            msg.channel.send(`\`\`\`diff\n- Blacklisted ${args[1]}\n\`\`\``)
-            let index = whitelistedPeople.indexOf(args[1])
-            if(index > -1) {
-                whitelistedPeople.splice(index,1)
-            }
-            require('fs').writeFile('./Code/whitelist.json', JSON.stringify(whitelistedPeople), (error) => {
-                if (error) {
-                    throw error;
-                }
-            })
-        }
-    } else if(command == 'help') {
-        let cmd = `[${args[0].toLowerCase().trim()}`
-        const hh = helpMsg.split('\n')
-        const fh = funHelp.split('\n')
-        const uh = utilityHelp.split('\n')
-        const ah = abusiveHelp.split('\n')
-        let com = ''
-
-        for(const ln of hh) {
-            if(ln.includes(cmd)) {
-                com += `${ln}\n`
-            }
-        }
-
-        for(const ln of fh) {
-            if(ln.includes(cmd)) {
-                com += `${ln}\n`
-            }
-        }
-
-        for(const ln of uh) {
-            if(ln.includes(cmd)) {
-                com += `${ln}\n`
-            }
-        }
-
-        for(const ln of ah) {
-            if(ln.includes(cmd)) {
-                com += `${ln}\n`
-            }
-        }
-        
-        if(com !== '') {
-            msg.channel.send(`\`\`\`ini\n${com}\n\`\`\``)
+    if(!client.commands.has(command) && !client.aliases.has(command)) return
+    try {
+        if(client.commands.has(command)) {
+            if (client.commands.get(command).deletes == false) msg.delete()
+            client.commands.get(command).execute(msg,args,client,{'key': key})
         } else {
-            msg.channel.send('```diff\n- Error: command not found\n```')
+            if (client.commands.get(client.aliases.get(command)).deletes == false) msg.delete()
+            client.commands.get(client.aliases.get(command)).execute(msg,args,client)
         }
-    } else if(command == 'poll') {
-        if(args[0].toLowerCase() == 't/f') {
-            if(msg.author == client.user) {
-                msg.delete()
-            }
-            args.shift()
-            const message = await msg.channel.send(args.join(' '))
-            message.react('✅')
-            message.react('❌')
-        } else {
-            if(msg.author == client.user) {
-                msg.delete()
-            }
-            msgCon = msg.content.replace(`${prefix}poll `, '')
-            let isq = false
-            if(args[0].toLowerCase().startsWith('[q:')) {
-                mes = `> ${msgCon.substring(3,msgCon.indexOf(']'))}\n\n`
-                msgCon = msgCon.replace(msgCon.substring(3,msgCon.indexOf(']')))
-                isq = true
-            } else {
-                mes = ''
-            }
-            let ques = msgCon.split(' ')
-            if(isq) {ques.shift()}
-            ques = ques.join(' ').split('] [')
-            ques[0] = ques[0].replace('[', '')
-            ques[ques.length-1] = ques[ques.length-1].replace(']', '')
-            for(let i = 0; i < ques.length; i++) {
-                mes += `${emojiNum[i+1]} ${ques[i]}`
-                mes += '\n'
-            }
-            const message = await msg.channel.send(mes)
-            for(let j = 0; j < ques.length; j++) {
-                message.react(emojiNum[j+1])
-            }
-        }
-    } else if(command == 'qreact') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        let reactions = []
-        let t = args[0].replace(' ', '').split('')
-        for(let i = 0; i < t.length; i++) {
-            if(t[i] == 'n' && t[i+1] == 'g') {
-                reactions[i] = '🆖'
-                t.splice(i+1,i+1)
-            } else if(t[i] == 'v' && t[i+1] == 's') {
-                reactions[i] = '🆚'
-                t.splice(i+1,i+1)
-            } else {
-                reactions[i] = emojis[t[i].charCodeAt(0)-97]
-            }
-        }
-        msg.delete()
-            .then(() => {
-                msg.channel.messages.fetch({ limit: 1 }).then(messages => {
-                let lastMessage = messages.first();
-            
-                for(let emoji of reactions) {
-                    lastMessage.react(emoji)
-                }
-            })
-        })
-          .catch(console.error);
-    } else if(command == 'blocky') {
-        if(args[0] == 'on') {
-            blocky = true
-        } else if(args[0] == 'off') {
-            blocky = false
-        }
-        if(msg.author == client.user) {
-            msg.delete()
-        }
-    } else if(command == 'autoedit') {
-        if(args[0] == 'on') {
-            autoedit = true
-        } else if(args[0] == 'off') {
-            autoedit = false
-        }
-        if(msg.author == client.user) {
-            msg.delete()
-        }
-    } else if(command == 'spam') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        msg.delete()
-        const n = args.shift()
-        const m = args.join(' ')
-        for(let i = 0; i < n; i++) {
-            msg.channel.send(m)
-        }
-    } else if(command == 'ghostmessage' || command == 'gm') {
-        if(msg.author !== client.user) {permDenied(msg); return}
-        msg.delete()
-    } else if(command == 'yellow') {
-        let m = args.join(' ')
-        msg.delete()
-        msg.channel.send(`\`\`\`fix\n${m}\n\`\`\``)
-    } else if(command == 'orange') {
-        let m = args.join(' ')
-        msg.delete()
-        msg.channel.send(`\`\`\`css\n[${m}]\n\`\`\``)
-    } else if(command == 'cyan') {
-        let m = args.join(' ')
-        msg.delete()
-        msg.channel.send(`\`\`\`yaml\n${m}\n\`\`\``)
-    } else if(command == 'blue') {
-        let m = args.join(' ')
-        msg.delete()
-        msg.channel.send(`\`\`\`md\n# ${m}\n\`\`\``)
-    } else if(command == 'grey') {
-        let m = args.join(' ')
-        msg.delete()
-        msg.channel.send(`\`\`\`\n${m}\n\`\`\``)
-    } else if(command == 'red') {
-        let m = args.join(' ')
-        msg.delete()
-        msg.channel.send(`\`\`\`diff\n- ${m}\n\`\`\``)
-    } else if(command == 'green') {
-        let m = args.join(' ')
-        msg.delete()
-        msg.channel.send(`\`\`\`diff\n+ ${m}\n\`\`\``)
-    } else if(command == 'nukemessages') {
-        msg.delete()
-        msg.channel.send('e')
-        for(let i = 0; i < 3; i++) {
-            msg.channel.send(purgeHackText)
-        }
-    } else if(command == 'clap') {
-        if(args[0] == 'on') {
-            clap = true
-        } else if(args[0] == 'off') {
-            clap = false
-        }
-        if(msg.author == client.user) {
-            msg.delete()
-        }
-    } else if(command == 'fwset') {
-        msg.delete().then(() => {
-            msg.channel.messages.fetch({ limit: 1 }).then(messages => {
-                let lastMessage = messages.first();
-                fwmsg = `> \`FW: Message from ${lastMessage.author.tag}\`\n> ${lastMessage.content.replace('\n', '\n> ')}`
-            })
-        })
-    } else if(command == 'fwto') {
-        msg.delete()
-        msg.channel.send(fwmsg)
-    } else if(command == 'bio') {
-        if(bios[args[0]]) {
-            msg.channel.send(`\`\`\`md\n${bios[args[0]]}\n\`\`\``)
-        }
+    } catch(err) {
+        console.error(err)
+        msg.channel.send('```diff\n- ! Error executing command. Try relaunching Midnight.\n```')
     }
 })
 
@@ -490,15 +191,6 @@ function permDenied(msg) {
 - You do not have permission to execute that command.
 \`\`\``)
 }
-
-function removeDuplicateCharacters(string) {
-    return string
-      .split('')
-      .filter(function(item, pos, self) {
-        return self.indexOf(item) == pos;
-      })
-      .join('');
-  }
 
 function digToText(dig) {
     return dg[dig]
@@ -523,3 +215,7 @@ function sumDigitsFromString(str) {
       .map((charCode) => String.fromCharCode(charCode))
       .join("");
   };
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }  
